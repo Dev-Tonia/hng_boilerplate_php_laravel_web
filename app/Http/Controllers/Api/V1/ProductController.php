@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Models\OrganisationUser;
 use App\Models\User;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -62,7 +63,7 @@ class ProductController extends Controller
             $query->where('price', '<=', $request->maxPrice);
         }
 
-        if($request->filled('status')) {
+        if ($request->filled('status')) {
             $query->whereHas('productsVariant', function ($q) use ($request) {
                 $q->where('stock_status', $request->status);
             });
@@ -94,15 +95,15 @@ class ProductController extends Controller
             // Calculate offset
             $offset = ($page - 1) * $limit;
 
-            
+
             $products = Product::select(
-            'product_id',
-            'name',
-            'price', 
-            'imageUrl', 
-            'description', 
-            'created_at',
-            'quantity'
+                'product_id',
+                'name',
+                'price',
+                'imageUrl',
+                'description',
+                'created_at',
+                'quantity'
             )
                 ->with(['productsVariant', 'categories'])
                 ->offset($offset)
@@ -121,9 +122,9 @@ class ProductController extends Controller
                     'description' => $product->description,
                     'product_id' => $product->product_id,
                     'quantity' => $product->quantity,
-                    'category' => $product->categories->isNotEmpty() ? $product->categories->map->name : [], 
-                    'stock' => $product->productsVariant->isNotEmpty() ? $product->productsVariant->first()->stock : null, 
-                    'status' => $product->productsVariant->isNotEmpty() ? $product->productsVariant->first()->stock_status : null, 
+                    'category' => $product->categories->isNotEmpty() ? $product->categories->map->name : [],
+                    'stock' => $product->productsVariant->isNotEmpty() ? $product->productsVariant->first()->stock : null,
+                    'status' => $product->productsVariant->isNotEmpty() ? $product->productsVariant->first()->stock_status : null,
                     'date_added' => $product->created_at
                 ];
             });
@@ -214,28 +215,44 @@ class ProductController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($productId)
+    public function destroy($org_id, $product_id)
     {
-        if (!Auth::check()) {
-            return response()->json([
-                'error' => 'Unauthorized',
-                'message' => 'You must be authenticated to delete a product.'
-            ], 401);
+
+        $isOwner = OrganisationUser::where('org_id', $org_id)->where('user_id', auth()->id())->exists();
+
+        // Check if the user's organization matches the org_id in the request
+        if (!$isOwner) {
+            return response()->json(
+                [
+                    'status' => 'Forbidden',
+                    'message' => 'You do not have permission to delete a product from this organization.',
+                    'status_code' => 403
+                ],
+                403
+            );
         }
 
-        $product = Product::find($productId);
+        $product = Product::find($product_id);
 
         if (!$product) {
             return response()->json([
                 'error' => 'Product not found',
-                'message' => "The product with ID $productId does not exist."
+                'message' => "The product with ID $product_id does not exist."
             ], 404);
+        }
+
+        // Check if the product belongs to the organization
+        if ($product->organization_id !== $org_id) {
+            return response()->json([
+                'error' => 'Forbidden',
+                'message' => 'You do not have permission to delete this product.'
+            ], 403);
         }
 
         $product->delete();
 
         return response()->json([
             'message' => 'Product deleted successfully.'
-        ], 200);
+        ], 204);
     }
 }

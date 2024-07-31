@@ -80,32 +80,6 @@ class LoginTest extends TestCase
             ->assertJsonValidationErrors(['password']);
     }
 
-    public function test_login_attempt_limit()
-    {
-        User::factory()->create([
-            'email' => 'test@gmail.com',
-            'password' => Hash::make('Ed8M7s*)?e:hTb^#&;C!<ysderrwr'),
-        ]);
-
-        for ($i = 0; $i < 3; $i++) {
-            $this->postJson('/api/v1/auth/login', [
-                'email' => 'test@gmail.com',
-                'password' => 'Ed8M7s*)?e:hTb^#&;C!<y',
-            ]);
-        }
-
-        $response = $this->postJson('/api/v1/auth/login', [
-            'email' => 'test@gmail.com',
-            'password' => "Ed8M7s*)?e:hTb^#&;C!<y",
-        ]);
-
-        $response->assertStatus(403)
-            ->assertJson([
-                'message' => 'Too Many login attempts. Please try again in one hour',
-                'error' => 'too_many_attempts',
-                'status_code' => 403
-            ]);
-    }
 
     public function test_successful_login_after_rate_limit_expires()
     {

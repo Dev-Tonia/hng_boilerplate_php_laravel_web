@@ -67,7 +67,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback']);
 
     Route::apiResource('/users', UserController::class);
-    
+
     //jobs
     Route::get('/jobs', [JobController::class, 'index']);
     Route::get('/jobs/search', [JobSearchController::class, 'search']);
@@ -85,8 +85,8 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:api')->group(function () {
         Route::get('/products', [ProductController::class, 'index']);
         Route::post('/products', [ProductController::class, 'store']);
-        Route::delete('/products/{productId}', [ProductController::class, 'destroy']);
         Route::get('/products/{product_id}', [ProductController::class, 'show']);
+        Route::delete('/organizations/{org_id}/products/{product_id}', [ProductController::class, 'destroy']);
     });
 
 
@@ -217,7 +217,6 @@ Route::prefix('v1')->group(function () {
     // User Notification
     Route::patch('/notifications/{notification}', [UserNotificationController::class, 'update']);
     Route::delete('/notifications', [UserNotificationController::class, 'destroy']);
-
 });
 
 
