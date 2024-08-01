@@ -295,8 +295,7 @@ class ProductController extends Controller
     {
 
         $isOwner = OrganisationUser::where('org_id', $org_id)->where('user_id', auth()->id())->exists();
-
-        // Check if the user's organization matches the org_id in the request
+        // dd($isOwner);        // Check if the user's organization matches the org_id in the request
         if (!$isOwner) {
             return response()->json(
                 [
@@ -318,7 +317,7 @@ class ProductController extends Controller
         }
 
         // Check if the product belongs to the organization
-        if ($product->organization_id !== $org_id) {
+        if ($product->org_id !== $org_id) {
             return response()->json([
                 'error' => 'Forbidden',
                 'message' => 'You do not have permission to delete this product.'

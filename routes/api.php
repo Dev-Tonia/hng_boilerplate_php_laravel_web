@@ -65,6 +65,11 @@ Route::prefix('v1')->group(function () {
     Route::get('/auth/google', [SocialAuthController::class, 'redirectToGoogle']);
     Route::get('/auth/login-google', [SocialAuthController::class, 'redirectToGoogle']);
     Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback']);
+    Route::post('/auth/google/callback', [SocialAuthController::class, 'saveGoogleRequest']);
+
+    Route::get('/auth/login-facebook', [SocialAuthController::class, 'loginUsingFacebook']);
+    Route::get('/auth/facebook/callback', [SocialAuthController::class, 'callbackFromFacebook']);
+    Route::post('/auth/facebook/callback', [SocialAuthController::class, 'saveFacebookRequest']);
 
     Route::apiResource('/users', UserController::class);
 
@@ -78,19 +83,16 @@ Route::prefix('v1')->group(function () {
     Route::get('/billing-plans', [BillingPlanController::class, 'index']);
     Route::get('/billing-plans/{id}', [BillingPlanController::class, 'getBillingPlan']);
 
-
     Route::middleware('throttle:10,1')->get('/topics/search', [ArticleController::class, 'search']);
-
 
     Route::middleware('auth:api')->group(function () {
         Route::get('/products', [ProductController::class, 'index']);
-        Route::post('/products', [ProductController::class, 'store']);
+        Route::post('/organizations/{org_id}/products', [ProductController::class, 'store']);
+        Route::patch('/organizations/{org_id}/products/{product_id}', [ProductController::class, 'update']);
+        Route::delete('/products/{productId}', [ProductController::class, 'destroy']);
         Route::get('/products/{product_id}', [ProductController::class, 'show']);
         Route::delete('/organizations/{org_id}/products/{product_id}', [ProductController::class, 'destroy']);
     });
-
-
-
 
     //comment
     Route::middleware('auth:api')->group(function () {
@@ -104,7 +106,8 @@ Route::prefix('v1')->group(function () {
     });
 
     Route::middleware('throttle:10,1')->get('/help-center/topics/search', [ArticleController::class, 'search']);
-    Route::post('/contact', [ContactController::class, 'sendInquiry']);
+    Route::post('/inquiries', [ContactController::class, 'sendInquiry']);
+    Route::get('/inquiries', [ContactController::class, 'index']);
 
     Route::get('/blog/latest', [BlogController::class, 'latest']);
     Route::get('/blog/search', [BlogSearchController::class, 'search']);
@@ -149,6 +152,7 @@ Route::prefix('v1')->group(function () {
 
         // members
         Route::get('/members/{org_id}/search', [OrganizationMemberController::class, 'searchMembers']);
+        Route::get('/members/{org_id}/export', [OrganizationMemberController::class, 'download']);
 
         Route::delete('/organizations/{org_id}', [OrganisationController::class, 'destroy']);
 
